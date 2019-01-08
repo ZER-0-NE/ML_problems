@@ -59,7 +59,23 @@ The Transfer Learning approach allows us to use already learned features again.
 - Total of 200 epochs were run and the accuracies stabilised around 100 epochs.
 - We calulated prediction confidence for each image belonging to the 12 classes.
 
+### Comparison:
 
+We compare our model with that of the state-of-the-art. The below tables show our comparison.
+
+![Comparison](/assets/comparison.png)
+
+#### Confusion Matrix:
+![conf_matrix](/assets/conf_matrix.png)
+
+
+![conf_mat](/assets/conf_matrix_.png)
+
+### Accuracy Results:
+
+![t](/assets/train.png)
+
+![train](/assets/train_.png)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
