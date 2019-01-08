@@ -21,7 +21,6 @@ There are a number of reasons why this statistic goes unnoticed. Of all the doct
 ### The 12 Classes:
 - 22q11.2DS                              
 - Angelman
-![Angelman](/assets/angelman.jpg)
 - Apert
 - Cornelia de Lange (CDL)
 - Down’s Syndrome
