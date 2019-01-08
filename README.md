@@ -33,10 +33,32 @@ There are a number of reasons why this statistic goes unnoticed. Of all the doct
 - Williams 
 
 
+### Dataset:
+The eLife dataset was provided by [Cristoffer Nellaker](https://elifesciences.org/articles/02020) from Oxford University (excluding the Gorlin Collection).
+
 ### Approach used:
- We use the **ResNet-50 architecture** which is based on residual learning network, easier to optimize and consequently, enables training of deeper networks.
+ We use the **ResNet-50 architecture** which is based on residual learning network, and is easier to optimize and consequently, enables training of deeper networks.
 This leads to an overall improvement in network capacity and performance.
 It **won the ILSVRC 2015 classification task** by obtaining a 28% relative improvement on the COCO object detection dataset.
+
+![ResNet50](/assets/res50.jpg)
+
+### Methodology:
+First, we used 4 Fully Connected layers on top of VGGFace.
+Then, 3 fully connected layers and an SVM classifier on top.
+The Transfer Learning approach allows us to use already learned features again.
+
+![Methods](/assets/methods.png)
+
+- SGD optimizer with very small learning rate of 0.0001 and momentum of 0.9 was used.
+- Callback was defined in keras for reducing learning rate by 0.1 whenever the validation loss stopped improving.
+- Batch size was set at 32 in each case.
+- We minimize cross-entropy loss as a basis of good classification.
+- The classifier was built in keras (v2) library for deep learning.
+- The model was trained using Tesla K80 GPU.
+- Total of 200 epochs were run and the accuracies stabilised around 100 epochs.
+- We calulated prediction confidence for each image belonging to the 12 classes.
+
 
 
 ## Contributing
