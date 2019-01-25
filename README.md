@@ -48,7 +48,9 @@ First, we used 4 Fully Connected layers on top of VGGFace.
 Then, 3 fully connected layers and an SVM classifier on top.
 The Transfer Learning approach allows us to use already learned features again.
 
-![Methods](/assets/methods.png)
+<p align="center">
+  <img  src=/assets/methods.png/>
+</p>
 
 - SGD optimizer with very small learning rate of 0.0001 and momentum of 0.9 was used.
 - Callback was defined in keras for reducing learning rate by 0.1 whenever the validation loss stopped improving.
@@ -63,19 +65,40 @@ The Transfer Learning approach allows us to use already learned features again.
 
 We compare our model with that of the state-of-the-art. The below tables show our comparison.
 
-![Comparison](/assets/comparison.png)
+
+<p align="center">
+  <img  src=/assets/comparison.png/>
+</p>
+
 
 #### Confusion Matrix:
-![conf_matrix](/assets/conf_matrix.png)
 
 
-![conf_mat](/assets/conf_matrix_.png)
+<p align="center">
+  <img  src=/assets/conf_matrix.png/>
+</p>
+
+
+
+<p align="center">
+  <img  src=/assets/conf_matrix_.png/>
+</p>
+
+
 
 ### Accuracy Results:
 
-![t](/assets/train.png)
 
-![train](/assets/train_.png)
+<p align="center">
+  <img  src=/assets/train.png/>
+</p>
+
+
+<p align="center">
+  <img  src=/assets/train_.png>
+</p>
+
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
