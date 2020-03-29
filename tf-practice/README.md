@@ -6,7 +6,7 @@ This is a repo I use often to brush up my skills in Tensorflow and to learn and 
 
 You can run all the scripts/notebooks individually by having all the required dependencies installed in your machine. Please note that you should have all the other scripts in your same local directory in order for the imports to work properly.
 
-## Calculating number of parameters in Feed-forward Neural Networks:
+## Calculating the number of parameters in Feed-forward Neural Networks:
 
 Let, 
 - i, input size
@@ -67,6 +67,66 @@ model = Sequential([
 	Dense(1),
 	Dense(100),
 	Dense(50),
+])
+```
+
+## Calculating the number of parameters in Convolutional Neural Networks:
+
+Let, 
+- i, no. of input maps (or channels)
+- f, filter size/dimensions of the filter
+- o, no. of output maps
+
+For one conv layer, num_params
+= weights + biases
+
+`num_params = [i x (fxf) x o] + o`
+
+#### Example 1:
+
+
+<p align="center">
+  <img  src=/assets/param_3.png/>
+</p>
+
+
+Here, i = 1 (only one channel); f = 2; o = 3
+
+num_params = weights + biases
+
+= [1 x (2x2) x 3] + 3
+
+= 15 (There are 15 parameters viz., 12 weights and 3 biases)
+
+Building such a sequential model would look something like:
+
+```
+model = Sequential([
+	Conv2D(3, (2,2), input_shape = (None, None, 1))
+])
+```
+
+#### Example 2:
+
+
+<p align="center">
+  <img  src=/assets/param_4.png/>
+</p>
+
+
+Here, i = 3 (three channels); f = 2; o = 1
+
+num_params = weights + biases
+
+= [3 x (2x2) x 1] + 1
+
+= 13 (There are 13 parameters viz., 12 weights and 1 bias)
+
+Building such a sequential model would look something like:
+
+```
+model = Sequential([
+	Conv2D(1, (2,2), input_shape = (None, None, 3))
 ])
 ```
 
