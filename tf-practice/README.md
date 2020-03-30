@@ -132,6 +132,22 @@ model = Sequential([
 
 [REFERENCES](https://towardsdatascience.com/counting-no-of-parameters-in-deep-learning-models-by-hand-8f1716241889#192e)
 
+## Weights and Biases
+
+### Default Weights and Biases
+
+Generally, we do not specify the weights and biases in the models we use.
+The default values of weights and biases in TensorFlow depend on the type of layers we are using.
+For example, in a *Dense* Layer, the biases are set to zero by default and the weights are set according to the `glorot_uniform`, the *Glorot Uniform* Initializer.
+
+The Glorot uniform initializer draws the weights uniformly at random from the closed interval [-c, c], where
+
+<p align="center">
+  <img  src="https://bit.ly/2UL6S6H"/>
+</p>
+
+and n <sub>input</sub> and n <sub>output</sub> are the number of inputs to and outputs from the layer respectively.
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
