@@ -189,15 +189,8 @@ import tensorflow.keras.backend as K
 def my_init(shape, dtype=None):
 	return K.random_normal(shape, dtype=dtype)
 
-
-
+model.add(Dense(64, kernel_initializer=my_init))
 ```
-
-
-
-
-
-
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
