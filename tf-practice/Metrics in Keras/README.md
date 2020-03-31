@@ -7,7 +7,7 @@ This repo defines and derives some of the metrics that are used in Keras along w
 
 Suppose we are training a model for a binary classification problem with a sigmoid activation function.
 
-Given a training example with input $x^{(i)}$, the model will output a float between 0 and 1. Based on whether this float is less than or greater than our "threshold" (which by default is set at 0.5), we round the float to get the predicted classification $y_{pred}$ from the model.
+Given a training example with input ![img](https://bit.ly/2R28kRk), the model will output a float between 0 and 1. Based on whether this float is less than or greater than our "threshold" (which by default is set at 0.5), we round the float to get the predicted classification $y_{pred}$ from the model.
 
 The accuracy metric compares the value of $y_{pred}$ on each training example with the true output, the one-hot coded vector $y_{true}^{(i)}$ from our training data.
 
