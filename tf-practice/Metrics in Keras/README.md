@@ -24,5 +24,5 @@ A neural network without an activation function is essentially just a linear reg
 #### Activation Functions Cheat-sheet
 
 <p align="center">
-  <img  src=/assets/activ_func_cheat.png/>
+  <img  src=assets/activ_func_cheat.png/>
 </p>
