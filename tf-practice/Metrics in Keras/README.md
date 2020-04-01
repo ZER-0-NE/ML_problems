@@ -5,5 +5,5 @@ This repo defines and derives some of the metrics that are used in Keras along w
 #### Activation Functions Cheat-sheet
 
 <p align="center">
-  <img  src=/assets/activ_func_cheat.png/>
+  <img  src=assets/activ_func_cheat.png/>
 </p>
