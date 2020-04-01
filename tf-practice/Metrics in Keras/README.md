@@ -6,7 +6,7 @@ This repo defines and derives some of the metrics that are used in Keras along w
 ### Why do we need Activation Function?
 
 <p align="center">
-  <img  src=/assets/why_activ_func.png/>
+  <img  src=assets/why_activ_func.png/>
 </p>
 
 In a Neural Network every neuron will do two computations:
