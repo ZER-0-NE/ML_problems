@@ -3,6 +3,22 @@
 This repo defines and derives some of the metrics that are used in Keras along with some info about its mathematical background.
 
 
+### What has been discussed here:
+
+- Binary classification
+- Categorical classification
+- Activation Functions:
+	- Sigmoid
+	- Softmax
+	- ReLu; LReLu
+	- Tanh
+- Loss:
+	- Categorical CrossEntropy Loss
+	- Binary Crossentropy Loss
+	- Sparse Categorical accuracy
+	- Top-k Categorical Accuracy
+
+
 ### Why do we need Activation Function?
 
 <p align="center">
