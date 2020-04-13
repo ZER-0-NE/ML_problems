@@ -1,6 +1,6 @@
-# Tensorflow-Practice
+# ML-DL-Practice
 
-This is a repo I use often to brush up my skills in Tensorflow and to learn and keep track of some minute things which often go unnoticed.
+This is a repo I use often to brush up my skills in Tensorflow/Keras and to learn and keep track of some minute things which often go unnoticed.
 
 ## Usage
 
