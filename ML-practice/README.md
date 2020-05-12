@@ -2,6 +2,47 @@
 
 This is a repo I use often to brush up my skills in Tensorflow/Keras and to learn and keep track of some minute things which often go unnoticed.
 
+## INDEX
+
+- Batch Norm
+  - - [x] Theoretical background
+  - - [ ] Scratch implementation
+  - - [x] Code sample(s)
+
+
+- Callbacks
+  - - [x] Theoretical background
+  - - [ ] Scratch implementation
+  - - [x] Code sample(s)
+
+
+- Gradient Descent
+  - - [ ] Theoretical background
+  - - [ ] Scratch implementation
+  - - [ ] Code sample(s)
+
+
+- Metrics in Keras
+  - - [x] Theoretical background
+  - - [x] Scratch implementation
+  - - [x] Code sample(s)
+
+- Regularizers
+  - - [x] Theoretical background
+  - - [ ] Scratch implementation
+  - - [ ] Code sample(s)
+
+- Supervised Learning
+  - - [x] Decision Tree (C/R)
+  - - [x] Random Forest (C/R)
+  - - [ ] Support Vector Machines (# Error)
+  - - [ ] kNN (C/R)
+  - - [ ] Naive Bayes
+
+- Unsupervised Learning
+  - - [x] K means clustering
+  - - [ ] Association Rules 
+
 ## Usage
 
 You can run all the scripts/notebooks individually by having all the required dependencies installed in your machine. Please note that you should have all the other scripts in your same local directory in order for the imports to work properly.
