@@ -40,7 +40,7 @@ This is a repo I use often to brush up my skills in Tensorflow/Keras and to lear
   - - [ ] Naive Bayes
 
 - Unsupervised Learning
-  - - [x] K means clustering
+  - - [ ] K means clustering
   - - [ ] Association Rules 
 
 ## Usage
