@@ -37,7 +37,7 @@ This is a repo I use often to brush up my skills in Tensorflow/Keras and to lear
   - - [x] Random Forest (C/R)
   - - [ ] Support Vector Machines (# Error)
   - - [x] kNN (C/R)
-  - - [ ] Naive Bayes (Left: More on prob)
+  - - [ ] Naive Bayes (Left: resume after learning more on prob)
 
 - Unsupervised Learning
   - - [ ] K means clustering
