@@ -1,3 +1,6 @@
 [submodule "ML_problems/Reinforcement"]
 	path = ML_problems/Reinforcement
 	url = https://github.com/ZER-0-NE/Reinforcement-Learning_problems.git
+[submodule "ML-practice/Reinforcement"]
+	path = ML-practice/Reinforcement
+	url = https://github.com/ZER-0-NE/Reinforcement-Learning_problems.git
