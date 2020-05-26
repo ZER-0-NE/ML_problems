@@ -41,7 +41,7 @@ This is a repo I use often to brush up my skills in Tensorflow/Keras and to lear
 
 - Unsupervised Learning
   - - [ ] K means clustering
-  - - [ ] Association Rules 
+  - - [ ] Association Rules (Basic theory done)
 
 ## Usage
 
