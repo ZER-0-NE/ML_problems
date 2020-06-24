@@ -38,6 +38,7 @@ This is a repo I use often to brush up my skills in Tensorflow/Keras and to lear
   - - [ ] Support Vector Machines (# Error)
   - - [x] kNN (C/R)
   - - [ ] Naive Bayes (Left: resume after learning more on prob)
+  - - [ ] Ensemble methods (Bagging and Boosting)
 
 - Unsupervised Learning
   - - [ ] K means clustering
