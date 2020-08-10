@@ -39,10 +39,12 @@ This is a repo I use often to brush up my skills in Tensorflow/Keras and to lear
   - - [x] kNN (C/R)
   - - [ ] Naive Bayes (Left: resume after learning more on prob)
   - - [ ] Ensemble methods (Bagging and Boosting)
+  - - [ ] Linear Discriminat Analysis (LDA)
 
 - Unsupervised Learning
   - - [ ] K means clustering
   - - [ ] Association Rules (Basic theory done)
+  - - [ ] Principal Component Analysis (PCA)
 
 ## Usage
 
