@@ -1,3 +1,15 @@
+# Quick Notes
+
+- Sentences can first be split into words (or subword units) called **tokens** using **tokenization**
+- These tokens are then assigned an integer value called a **token ID**, which can be converted into a one-hot encoded vector as shown later.
+- The process of assigning any non-numeric data, such as images and text, a numerical representation is called **embedding**, and so these vector representations of words are known as **word embeddings**. 
+- **Word Embedding **is the process of taking a word and creating a vector representation in N-dimensional space. 
+- Prior to 2013, word embeddings were often created using one-hot encoding. This method for producing vector representations is very simple: for each word construct a vector with 0s in every element, except at the position equal to the token ID which should be filled with a 1. This creates a unique vector for each word, where the position of the 1 indicates which word is being encoded (hence the name ‘one-hot’). Because of this, one-hot vectors are called localist representations, as all the information that represents the word is restricted to a single element.
+- The collection of words a model can encode is called the **vocabulary**, and number of words in the vocabulary is called the **vocabulary size**.
+- **word2vec** is a family of algorithms that produce distributed word embeddings for use in NLP tasks. These vectors are far denser than those created using the one-hot encoding method (i.e. very few, if any, of the elements are 0), and so they can be much smaller in size. The idea is to create an N-dimensional vector space, in which similar words are geographically close to each other. 
+- Typically, these embeddings have around 300 dimensions. Once these embeddings are created, they can be written to a file and loaded into memory when needed to essentially form a lookup table at run time. When a language model is given some input text, the text is first converted into tokens. 
+- These are then converted into vectors by finding the appropriate row in the word2vec embeddings matrix. For this reason, the embeddings produced by word2vec are called static. These static embeddings form the basis for the so-called dynamic or contextual embeddings that are used in LLMs, which are made by adding context from the surrounding sentences or paragraphs to each word.
+
 # Tokenizer
 
 ## Q Why train a tokenizer like toktoken on your own data? what kind of existing tokenizer do we have?
