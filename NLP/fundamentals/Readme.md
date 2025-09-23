@@ -3,12 +3,52 @@
 - Sentences can first be split into words (or subword units) called **tokens** using **tokenization**
 - These tokens are then assigned an integer value called a **token ID**, which can be converted into a one-hot encoded vector as shown later.
 - The process of assigning any non-numeric data, such as images and text, a numerical representation is called **embedding**, and so these vector representations of words are known as **word embeddings**. 
-- **Word Embedding **is the process of taking a word and creating a vector representation in N-dimensional space. 
+- **Word Embedding** is the process of taking a word and creating a vector representation in N-dimensional space. 
 - Prior to 2013, word embeddings were often created using one-hot encoding. This method for producing vector representations is very simple: for each word construct a vector with 0s in every element, except at the position equal to the token ID which should be filled with a 1. This creates a unique vector for each word, where the position of the 1 indicates which word is being encoded (hence the name ‘one-hot’). Because of this, one-hot vectors are called localist representations, as all the information that represents the word is restricted to a single element.
 - The collection of words a model can encode is called the **vocabulary**, and number of words in the vocabulary is called the **vocabulary size**.
 - **word2vec** is a family of algorithms that produce distributed word embeddings for use in NLP tasks. These vectors are far denser than those created using the one-hot encoding method (i.e. very few, if any, of the elements are 0), and so they can be much smaller in size. The idea is to create an N-dimensional vector space, in which similar words are geographically close to each other. 
 - Typically, these embeddings have around 300 dimensions. Once these embeddings are created, they can be written to a file and loaded into memory when needed to essentially form a lookup table at run time. When a language model is given some input text, the text is first converted into tokens. 
 - These are then converted into vectors by finding the appropriate row in the word2vec embeddings matrix. For this reason, the embeddings produced by word2vec are called static. These static embeddings form the basis for the so-called dynamic or contextual embeddings that are used in LLMs, which are made by adding context from the surrounding sentences or paragraphs to each word.
+- **Static embedding** method predates transformers and suffers from one major drawback: the lack of contextual information. Words with multiple meanings (called polysemous words) are encoded with somewhat ambiguous representations since they lack the context needed for precise meaning. 
+- A classic example of a polysemous word is bank. Using a static embedding model, the word bank would be represented in vector space with some degree of similarity to words such as money and deposit and some degree of similarity to words such as river and nature. **This is because the word will occur in many different contexts within the training data. This is the core problem with static embeddings: they do not change based on context — hence the term “static”.**
+- The word2vec algorithms process a sentence one word at a time, which the white paper refers to as the center word, denoted w(t). Since word2vec is a distributed model, the algorithms also consider the surrounding context words, called outside words. The number of words considered before and after the center word is determined by a hyperparameter called the window size, which is chosen by the user before training the model. For a window size of  1 , the model will take 1 word before and after the center word to create the list of outside words. These are referred to mathematically as w(t-1) and w(t+1) respectively.
+- A **key difference between static and learned embeddings** is the way in which they are trained. Static embeddings are trained in a separate neural network (using the Skip-Gram or Continuous Bag of Words architectures) using a word prediction task within a given window size. Once trained, the embeddings are then extracted and used with a range of different language models. Learned embeddings, however, are integral to the transformer you are using and are stored as weights in the first linear layer of the model. These weights, and consequently the learned embedding for each token in the vocabulary, are trained in the same backpropagation steps as the rest of the model parameters.
+- The original papers propose two methods for learning these word vectors called **Skip-Gram and Continuous Bag of Words (CBOW)** These methods are very similar to each other, with both using a neural network with a single hidden layer to generate the word vectors. The difference lies in their objectives:
+  - Skip-Gram: Takes in a center word and predicts the outside words
+  - CBOW: Takes in some outside words and predicts the center word
+- The static embedding method predates transformers and suffers from one major drawback: the lack of contextual information. Words with multiple meanings (called polysemous words) are encoded with somewhat ambiguous representations since they lack the context needed for precise meaning.
+- **Transformers overcome the limitations of static embeddings by producing their own context-aware transformer embeddings. In this approach, fixed word embeddings are augmented with positional information (where the words occur in the input text) and contextual information (how the words are used). These two steps take place in distinct components in transformers, namely the positional encoder and the self-attention blocks, respectively.**
+- By incorporating this additional information, transformers can produce much more powerful vector representations of words based on their usage in the input sequence. Extending the vector representations beyond static embeddings is what enables Transformer-based models to handle polysemous words and gain a deeper understanding of language compared to previous models.
+  - **Static embeddings**: Each word (or token) in the vocabulary has exactly one fixed vector representation. No matter where or how the word appears, its embedding is the same.
+  - **Learned embeddings (contextual embeddings)**: The embedding of a token depends on its context (the surrounding words, sentence, etc.). Even the initial token embeddings themselves are parameters inside a larger model (e.g. a Transformer) that are updated as part of training that whole model.
+- Learned embeddings are parameters (weights) in the model. During training, you update them via backpropagation along with all the other model weights. 
+- After training is completed (or once you decide not to update them anymore), those embedding weights don’t change. They’re fixed. So they provide a fixed “starting point” for each token’s vector representation whenever you input that token.
+- Then, for each input during inference, you still add positional encoding and apply the Transformer layers to compute context / usage-dependent representations. But the raw embedding lookup always yields the same vector for that token (before adding position and context).
+- If you fine-tune the model on new data, then the embedding weights do change again. So “never change” is conditional on “no fine-tuning / freezing embeddings / during inference”.
+- Sometimes in transfer learning you might freeze embeddings (so they don’t change) during some phase of training, then unfreeze them, or allow small updates. So “never change” may not apply throughout all uses.
+- **The functions used to generate positional information must produce values that are**:
+  - Bounded — values should not explode in the positive or negative direction but be constrained (e.g. between 0 and 1, -1 and 1, etc)
+  - Periodic — the function should produce a repeating pattern that the model can learn to recognise and discern position from
+  - Predictable — positional information should be generated in such a way that the model can understand the position of words in sequence lengths it was not trained on. For example, even if the model has not seen a sequence length of exactly 412 tokens in its training, the transformer should be able to understand the position of each of the embeddings in the sequence.
+- **These constraints ensure that the positional encoder produces positional information that allows words to attend to (gain context from) any other important word, regardless of their relative positions in the sequence.** 
+- In theory, with a sufficiently powerful computer, words should be able to gain context from every relevant word in an infinitely long input sequence. The length of a sequence from which a model can derive context is called the context length. In chatbots like ChatGPT, the context includes the current prompt as well as all previous prompts and responses in the conversation (within the context length limit). This limit is typically in the range of a few thousand tokens, with GPT-3 supporting up to 4096 tokens and GPT-4 enterprise edition capping at around 128,000 tokens - **The goal of self-attention is to move the embedding for each token to a region of vector space that better represents the context of its use in the input sequence.**
+- The “Attention is All You Need” paper extends standard self-attention into Multi-Head Attention (MHA) by dividing the attention mechanism into multiple heads. In standard self-attention, the model learns a single set of weight matrices (W_Q, W_K, and W_V) that transform the token embedding matrix X into query, key, and value matrices (Q, K, and V). These matrices are then used to compute attention scores and update X with contextual information as we have seen above.
+- In contrast, MHA splits the attention mechanism into H independent heads, each learning its own smaller set of weight matrices. These weights are used to calculate a set of smaller, head-specific query, key, and value matrices (denoted Q^h, K^h, and V^h). Each head processes the input sequence independently, generating distinct attention outputs. These outputs are then concatenated (stacked on top of each other) and passed through a final linear layer to produce the updated X matrix, shown as Y in the diagram below, with rich contextual information.
+- By introducing multiple heads, MHA increases the number of learnable parameters in the attention process, enabling the model to capture more complex relationships within the data. Each head learns its own weight matrices, allowing them to focus on different aspects of the input such as long-range dependencies (relationships between distant words), short-range dependencies (relationships between nearby words), grammatical syntax, etc. The overall effect produces a model with a more nuanced understanding of the input sequence.
+
+![MHA](/assets/MHA.webp)
+
+- Decoder-Only Models:
+
+  - Goal: Predict a new output sequence in response to an input sequence
+  - Overview: The decoder block in the Transformer is responsible for generating an output sequence based on the input provided to the encoder. Decoder-only models are constructed by omitting the encoder block entirely and stacking multiple decoders together in a single model. These models accept prompts as inputs and generate responses by predicting the next most probable word (or more specifically, token) one at a time in a task known as Next Token Prediction (NTP). As a result, decoder-only models excel in NLG tasks such as: conversational chatbots, machine translation, and code generation. These kinds of models are likely the most familiar to the general public due to the widespread use of ChatGPT which is powered by decoder-only models (GPT-3.5 and GPT-4).
+
+- Encoder-Only Models:
+
+  - Goal: Make predictions about words within an input sequence
+  - Overview: The encoder block in the Transformer is responsible for accepting an input sequence, and creating rich, numeric vector representations for each word (or more specifically, each token). Encoder-only models omit the decoder and stack multiple Transformer encoders to produce a single model. These models do not accept prompts as such, but rather an input sequence for a prediction to be made upon (e.g. predicting a missing word within the sequence). Encoder-only models lack the decoder used to generate new words, and so are not used for chatbot applications in the way that GPT is used. Instead, encoder-only models are most often used for NLU tasks such as: Named Entity Recognition (NER) and sentiment analysis. The rich vector representations created by the encoder blocks are what give BERT a deep understanding of the input text. The BERT authors argued that this architectural choice would improve BERT’s performance compared to GPT, specifically writing that decoder-only architectures are: “sub-optimal for sentence-level tasks, and could be very harmful when applying finetuning based approaches to token-level tasks such as question answering” [1]
+
+
 
 # Tokenizer
 
@@ -570,3 +610,182 @@ Because it behaves like a mathematical object in **n-dimensional space**:
 * Machine learning uses vectors to represent data, features, embeddings, weights, etc. ([shelf.io][7]).
 
 ---
+
+# Attention is all you need
+
+## how can we make the context length more? can we keep on increasing the heads and that should work?
+
+
+Increasing the context length of transformer-style models (i.e. how many tokens you can feed the model and have it attend over) is an active area of research. No, simply increasing the number of attention heads is *not* sufficient (or efficient) by itself. There are fundamental and practical limitations. Below are **why it's not enough**, the constraints, and the ways people are actually pushing context lengths higher (with trade-offs).
+
+---
+
+### Why more heads alone don’t solve longer context
+
+If you increase the number of heads (say you double them, or go from 8 → 16 → 32 heads) while keeping everything else (hidden size, layers, etc.) more or less the same, you’ll run into several issues:
+
+1. **Compute and memory scale**:
+
+   * Self-attention cost is quadratic in sequence length *n* (i.e. O(n²·d\_model) roughly) because each of n query tokens attends to n key tokens. Doubling heads doesn’t reduce that O(n²) factor. You still have to compute pairwise attention scores.
+   * Also, you need memory to store attention score matrices (which is size n×n), key/value caches etc. That blows up with sequence length.
+
+2. **Dimensionality per head shrinks**:
+
+   * If you keep `d_model` fixed (total hidden dimensionality), then increasing number of heads splits the hidden size per head thinner. If each head becomes too small, each head’s capability (feature space) becomes limited, which can reduce effectiveness.
+
+3. **Positional encodings / generalization**:
+
+   * Many transformers are trained with a fixed maximum context length (e.g. 2048, 4096 tokens). Positional encodings, relative or absolute, are set up (and tuned) for that window. Going far beyond that without retraining or special handling tends to degrade performance.
+
+4. **Training stability & data**:
+
+   * To make models understand long context, you need enough training data with long sequences. If the model is never exposed to sequences of say length 100k, at inference time it will struggle.
+   * Also gradients, caching, hardware constraints (GPU/TPU memory, bandwidth) often limit how long sequences can be during training.
+
+---
+
+### Techniques that *are* used to extend context length
+
+Because of the constraints above, researchers have developed several methods for extending context length more efficiently. Some of these include:
+
+| Method                                                 | Basic idea                                                                                                                                                                                                                                       | Trade-offs / when it's used                                                                                                        |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Sparse attention / local windows / sliding windows** | Limit each token to attend only to a subset of other tokens (e.g. tokens within a local window, or selected key tokens) rather than all. This reduces cost and memory. Example: Routing Transformer; “Efficient Content-Based Sparse Attention”. | Less ability to attend to far away tokens in certain layers; may need multi-hop patterns or special routing to get global context. |
+| **Relative positional encodings, interpolation**       | Use position encodings that generalize, or fine-tune to extend positional embeddings beyond originally trained max length. E.g. “Position Interpolation” for RoPE (rotary position embeddings).                                                  | Needs additional fine-tuning; may have diminishing performance the further you extrapolate.                                        |
+| **Hierarchical approaches / summarization / chunking** | Break the input context into chunks, optionally summarize / compress (via special tokens or “landmark” tokens) and then allow the model to attend over summaries + some detailed chunks.                                                         | Loss of detail in summarized parts; overhead of extra summarization steps; complexity adds.                                        |
+| **Memory / recurrence approaches**                     | Use cached past hidden states, cross-chunk attention (e.g. Transformer-XL, Compressive Transformer) to allow the model to remember previous chunks without recomputing them.                                                                     | Requires careful memory management; may accumulate errors; might still limit how far back the model has “fresh” detailed context.  |
+| **Efficient / IO-aware attention implementations**     | Methods like FlashAttention that optimize how attention is computed (tiling, better memory access) so that longer contexts are more feasible / efficient.                                                                                        | Doesn’t fundamentally change O(n²) costs, but reduces constants / makes bigger n more practical.                                   |
+| **Novel attention approximations (SparseK, etc.)**     | Select a subset of key/value pairs per query (e.g. top-k, sparse kernel methods), achieve more favorable scaling (possibly near linear) for many queries.                                                                                        | Approximation may lose precision; sometimes needs fine-tuning; may perform differently for different tasks.                        |
+
+---
+
+### What a real increase in context window entails
+
+To significantly increase context length (say from 4k → 128k tokens or more), you’d likely need a combination of:
+
+* **Increasing d\_model / hidden size / layers** to support more capacity.
+* **Using efficient / sparse attention mechanisms** or approximations so you can afford the computation.
+* **Proper positional encoding scheme** that generalizes beyond training window (learned, relative, or interpolated).
+* **Training with longer sequences / curriculum**: gradually increasing context during pretraining so the model sees longer inputs.
+* **Memory strategies** to manage key/value storage, caching, hardware utilization.
+
+---
+
+### Conclusion
+
+* **No**, merely increasing the number of heads doesn’t solve the context length issue by itself. It can help sort of by distributing attention, but it doesn’t reduce the fundamental cost or memory blow-up of attention over very long sequences.
+* To make context windows much larger, you need additional techniques (sparse/approximated attention, chunking, better positional encodings, efficient implementations, etc.).
+
+If you like, I can pull up a list of specific architectures or models currently using 100k+ token contexts and detail *how* they accomplish that, so you can see what trade-offs are made.
+
+
+
+---
+
+
+## Encoder-only vs decoder-only vs encoder-decoder(seq2seq)
+
+Here’s a clear explanation of **encoder vs decoder models** in transformer architectures: what each does, how they differ, and which kinds of tasks each is good for.
+
+---
+
+### Basic definitions
+
+* **Transformer** architecture (from *“Attention Is All You Need”*) has two parts: an **encoder** and a **decoder**. The encoder processes input data and builds representations; the decoder uses those representations to produce output, often token by token.
+* Over the years, many variants have emerged: *encoder-only*, *decoder-only*, *encoder-decoder (seq2seq)*. Each is a subset or re-use of these blocks. ([Auroria][28])
+
+---
+
+### Encoder-Only Models
+
+#### What they are
+
+* These models consist **only** of the encoder stack (one or more transformer encoder layers). ([Auroria][28])
+* They use *self-attention* (bidirectional / full attention over all tokens in the input) so each token’s representation sees all the other tokens in the input. No masking of future positions. ([Vinija][29])
+
+#### Training objectives
+
+* Often trained with *masked language modeling* (MLM), where some tokens in the input are masked out and the model must predict them based on the rest. BERT is a famous example. ([MachineLearningMastery.com][30])
+* They produce contextual embeddings of input text. Good for classification, classification of tokens (NER), information extraction, semantic search, etc. ([IBM][31])
+
+#### Pros & Cons
+
+| Pros                                                                                   | Cons                                                                                                                              |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Good at understanding context (you can look both forwards and backwards in the input). | Cannot generate sequence outputs by itself (no auto-regressive generation) unless you add a separate decoding head.               |
+| Efficient / simpler for tasks that just need understanding (e.g. classification).      | Not useful for tasks where output is a sequence conditioned on some input (like translation, summarization) without modification. |
+
+---
+
+### Decoder-Only Models
+
+#### What they are
+
+* These are models made up **only** of decoder layers. They generally use *causal / masked self-attention*, meaning each token can only attend to previous tokens, not future ones. This ensures the model predicts next token(s) in a sequence in a valid order. ([Auroria][28])
+* There is *no encoder stack*. All inputs (prompts, context) are fed into this stack as tokens, and the model generates output autoregressively. GPT-family models are classic examples. ([Auroria][28])
+
+#### Training objective
+
+* Trained usually with *causal language modeling (CLM)*: predict each next token given all previous tokens. E.g. given “The cat sat on the”, predict “mat”. ([Auroria][28])
+* During inference, generation is done token by token, because each next output depends on past outputs.
+
+#### Pros & Cons
+
+| Pros                                                                                                             | Cons                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Very good for generative tasks (text generation, completion, dialogue, story writing).                           | They can be less efficient or less accurate in tasks needing strong contextual understanding of the full input both forward & backward. Because they don’t have full bidirectional attention.        |
+| Simpler architecture (no cross-attention / encoder-decoder connections). Might be more straightforward to scale. | Can produce outputs that are less precise for tasks like translation or summarization unless carefully trained / prompt engineered. Also need strategies to avoid generating bad/unwanted sequences. |
+
+---
+
+### Encoder-Decoder (Seq2Seq) Models
+
+#### What they are
+
+* These combine both encoder and decoder stacks. The **encoder** processes the input (e.g. a sentence in the source language) and produces a representation. The **decoder** generates output (e.g. translation) **while attending to both**: past outputs (via masked self-attention) + the encoder output (via *cross-attention*) at each step. ([Auroria][28])
+* Common examples: *T5*, *BART*, and the original transformer used for machine translation. ([Wikipedia][32])
+
+#### Pros & Cons
+
+| Pros                                                                                                                                                                            | Cons                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Very well suited for *conditional generation*: you want to generate an output sequence based on some input sequence (translation, summarization, question → answer, etc.).      | More complex architecture → more parameters, more compute. Also needs appropriate training data with input‐output pairs.   |
+| Encoder can fully process the input (bidirectional) to build rich representations; decoder uses that to produce output. This often yields higher quality in many seq2seq tasks. | Inference can be slower because you need both encoder + decoder; the decoder works autoregressively (one token at a time). |
+
+---
+
+### When to use which architecture
+
+Here are some guidelines / scenarios:
+
+| Task Type                                                                          | Good architecture(s) |
+| ---------------------------------------------------------------------------------- | -------------------- |
+| Text classification / sentiment / NER / embedding for search                       | Encoder-Only         |
+| Text generation / completion / chatbots / code generation                          | Decoder-Only         |
+| Translation / summarization / tasks where output is a transformed version of input | Encoder-Decoder      |
+
+---
+
+### Key Differences in Detail
+
+* **Attention Patterns**:
+    Encoder uses full attention over all input tokens (bidirectional).
+    Decoder uses *masked self-attention* so tokens only see earlier outputs (for generation), plus *cross-attention* when combined with encoder in seq2seq. ([next.gr][33])
+
+* **Training vs Inference behavior**:
+    Encoder-decoder models are usually trained with teacher forcing (decoder gets ground-truth previous token) but inference uses model’s own predictions. Decoder-only models always train in a causal next-token prediction way. ([Auroria][1])
+
+* **Efficiency trade-offs**:
+    Encoder-only are cheaper if you only need understanding tasks.
+    Encoder-decoder are heavier because you have two stacks and cross-attention etc.
+    Decoder-only is simpler in architecture but for long generated outputs it can be slow because each token is generated sequentially.
+
+---
+
+
+[28]: https://www.auroria.io/the-transformer-architecture/?utm_source=chatgpt.com "The Transformer Architecture"
+[29]: https://vinija.ai/models/Transformers/?utm_source=chatgpt.com "Vinija's Notes • Models • Transformers"
+[30]: https://machinelearningmastery.com/encoders-and-decoders-in-transformer-models/?utm_source=chatgpt.com "Encoders and Decoders in Transformer Models - MachineLearningMastery.com"
+[31]: https://www.ibm.com/think/topics/encoder-decoder-model?utm_source=chatgpt.com "What is an encoder-decoder model? | IBM"
+[32]: https://en.wikipedia.org/wiki/T5_%28language_model%29?utm_source=chatgpt.com "T5 (language model)"
+[33]: https://www.next.gr/ai/sentiment-analysis/decoder-vs-encoder-in-transformer-models?utm_source=chatgpt.com "Decoder vs Encoder in Transformer Models | AI Tutorial | Next Electronics"
