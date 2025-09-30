@@ -66,7 +66,100 @@
   - [CLS] (token ID: 101) — a classification token, one is expected at the beginning of every sequence, whether it is used or not. This token encapsulates the class information for classification tasks, and can be thought of as an aggregate sequence representation.
   - [SEP] (token ID: 102) — a separator token used to distinguish between two segments in a single input sequence (for example, in Next Sentence Prediction). At least one [SEP] token is expected per input sequence, with a maximum of two.
   - [MASK] (token ID: 103) — a mask token used to train BERT on the Masked Language Modelling task, or to perform infere_nce on a masked sequence.
+- **Base** refers to the standard version of a model that can be fine-tuned on a downstream task, while **chat and instruct** refer to specific fine-tuned versions of base models that have been trained for chatbot and instruction tasks respectively. Chat models are fine-tuned on conversation data, and are designed for conversational chatbot applications such as virtual assistants and ChatGPT-style use-cases. Instruct models on the other hand are designed to receive instructions and respond to them.
+- Mistral AI Architecture:
+  - Mistral AI have utilised a number of these advancements to improve the efficiency of Mistral 7B, achieving a highly performant model with a fraction of the parameters. In the following sections we will explore these advancements, which include:
 
+    - RMS Normalization — replacing Layer Normalization
+    - Rotary Position Embedding (RoPE) — replacing Absolute Positional Encoding
+    - Grouped Query Attention (GQA) — replacing Multi-Head Attention
+    - Sliding Window Attention (SWA) — improving training and inference speed, particularly for long sequences
+    - Rolling Buffer KV Cache — improving training and inference speed, in conjunction with SWA
+    - SwiGLU Activation Function — replacing ReLU in the Feed Forward sub-layers
+
+![mistral](/assets/mistral.webp)
+
+- Normalization Sub-Layer: Normalization is required in Transformer-based models due to an issue known as covariate shift. This describes the phenomenon in which some weights in a model receive significant updates while others do not. This change in distribution of the weights can have a knock-on effect in the next layer of the network, causing further unstable updates to weights during backpropagation and a drop in performance. Normalization standardises the inputs to each layer by ensuring a consistent mean and variance across the input vector, which in turn stabilises the learning process.
+
+- Feed Forward Sub-Layer: The Feed Forward step introduces non-linear transformations and additional learning capacity. In simple terms, these components allow the model to determine how best to improve its own internal representations of text by learning from training data. Feed Forward blocks are shallow neural networks consisting of: an input layer, one hidden layer, and an output layer. In the Transformer, the inputs to the Feed Forward network are the outputs from the Normalization step (we will see later that this is slightly different for Mistral 7B). The Feed Forward network takes in these numerical representations of the input sequence and updates them in a way that helps the model produce a good output sequence. By using a neural network approach, we eliminate the need to impose strict rules on how the model must augment these representations and instead allow the model to learn how best to change them via backpropagation.
+
+
+- Example:
+
+  For a more concrete example, consider how the original Transformer processes the input sequence: “Write a poem about a man fishing on a river bank”.
+
+  1. **Tokenization**: Divide the input sequence into the tokens write, a, poem, about, a, man, fishing, on, a, river, and bank. For more about tokenization, see Part 1 of this series.
+
+  2. **Embedding**: Map each token to its corresponding learned embedding. These are vector representations of the tokens which encode their general meaning. For more about embeddings, see Part 2 of this series.
+
+  3. **Multi-Head Attention**: Pass the embeddings into the Attention block to update the vector representation of each word with contextual information. This ensures that words such as bank are given more appropriate vector representations depending on their usage (e.g. river bank, monetary bank, etc.). For more about Attention blocks, see Part 3 of this series.
+
+  4. **Normalization**: Pass the contextual embeddings from the Attention block to the Normalization block. Here, the vectors of inputs are normalized to ensure a consistent mean and variance, mitigating the problem of covariate shift.
+
+  5. **Feed Forward**: Pass the output from the Normalization step to the Feed Forward sub-layer. This step updates the vector representation for each token in such a way that helps the model produce a nice poem later in the process. The specific steps for updating the vector representations are not hard-coded but rather learned by the model via backpropagation.
+
+  6. **Normalization**: Pass the outputs of the Feed Forward step to another Normalization block. Steps 3–6 repeat N times (where N is the number of encoder blocks) before the vector representations are sent to the decoder block.
+
+- The Need for Residual Connections:
+
+The architecture diagram below shows that inputs to the Attention and Feed Forward sub-layers are passed to the Normalization sub-layers via residual connections (highlighted in red). These inputs are added to the Attention and Feed Forward outputs respectively before normalization, hence the “Add” in the “Add & Norm” label. Residual connections help address an issue known as the vanishing gradient problem, a common challenge in training deep neural networks. During backpropagation, gradients (partial derivatives of the loss function with respect to each weight) determine the direction and magnitude of weight updates. However, these gradients can sometimes become extremely small as they propagate through many layers, leading to negligible changes in some weights. This can cause earlier layers in the network to learn very slowly as their gradients approach zero. Residual connections alleviate this problem by allowing gradients to flow more directly to earlier layers, bypassing some intermediate layers. This additional pathway helps maintain gradient strength, ensuring stable updates and preventing the model from “forgetting” what it has learned in earlier layers. In short, including a residual connection at each Normalization stage provides an additional path for backpropagated gradients and prevents the model from learning slowly in its earlier layers.
+
+![residual](/assets/residual.webp)
+
+- Visualising LayerNorm
+  - **LayerNorm** transforms the distribution of inputs to a network such that the values follow a Gaussian distribution. Consider the example shown in the image below, which focuses on Normalization directly after the Attention step. Here, the input to LayerNorm will be the sum of the Attention inputs and Attention outputs, the result of which is a matrix of contextual token embeddings for each token in the input sequence (in this case, “Write a poem about a man fishing on a river bank”). The dimensions of this matrix are L_max x d_model, where L_max is the input sequence length and d_model is the number of embedding dimensions. The columns of this matrix store the token embedding for each token of the input sequence. For example, the first column stores the contextual embedding for “write”, the second for “a”, and so on.
+
+  - A frequency plot using a histogram can be drawn to approximate the distribution of values for each individual token embedding. The image below shows an example with the embedding for “bank.” Before normalization, the values in the embedding vector for “bank” have a mean of 18.5, whereas afterwards, the mean is reduced to 0. The normalization process is applied to each column of the matrix separately, with each normalized according to its own mean and variance.
+
+![layer_norm](/assets/layer_norm.webp)
+
+- To normalize the token embeddings, we first calculate two key statistical values for each column: mean and variance. These values describe the centre and spread of the data, respectively. Once these have been established, each value in the input vector can be adjusted according to the normalization formula. Let’s briefly break down these formulae:
+
+  - **Mean**: The mean (average) describes the centre of a distribution and is calculated by summing all the values in a column and dividing by the number of values (dimensions) in the column.
+  - **Variance**: The variance describes the amount of spread (variation) within a distribution and is given by the average squared distance between each data point and the mean. A higher variance indicates that the data points are more spread out, while a lower variance indicates that the values cluster around the mean. The use of squared differences rather than absolute differences is partly due to historical reasons but also because it provides a differentiable measure of spread. This is a property that comes in very useful in advanced statistics, and so variance has become a standard measure in the field.
+  - **Normalization**: The normalization process involves two main formulae. The first (shown on the left of the two in the image below) transforms the column’s current distribution into a Normal distribution. This works by subtracting the mean from each value in the column so that the distribution is centred at 0, and then dividing by the square root of the variance (called the standard deviation). This division ensures the standard deviation of the resulting distribution is 1, which is a requirement for the Normal distribution. An additional term, ϵ, is included to prevent division by 0 when there is no spread in the data. The second formula applies learnable adjustments to these normalized values using two parameters: a scale factor, γ, and an offset, β. These parameters are learned by the model during training through backpropagation. The γ and β values are specific to each feature (row in the matrix), not to each embedding (column). Therefore, each dimension of an embedding will undergo a transformation using distinct γ and β values. This allows the model to learn flexible transformations within the embedding space, improving its ability to represent complex patterns in the data.
+
+![mean_variance](/assets/mean_variance.webp)
+
+- Mistral 7B uses an improvement to LayerNorm called **Root Mean Square Normalization, or RMS Norm**, introduced by Zhang and Sennrich in 2019 [7]. The authors hypothesised that the effectiveness of LayerNorm was due to rescaling the values (dividing by the variance) and not so much recentering them (subtracting the mean).
+
+- Therefore, if the calculation of the mean could be omitted, the model would see a significant speed boost during the training phase. The issue here however, is that the calculation of the variance itself also requires the mean to be known. Hence, the authors set out to identify a new rescaling method that would become RMS Normalization.
+
+- Rotary Position Embedding (RoPE):
+  - Unlike older architectures (such as Recurrent Neural Networks), Transformer-based models process all of their input tokens in parallel, not sequentially. While this parallel processing improves speed, it also results in a loss of positional information since the tokens are not processed in order. Therefore, some form of positional encoding is needed to inject this information back into the embedding vectors, and this can be achieved in various ways.
+
+  - Absolute Positional Encoding: The sinusoidal positional encoding technique introduced in the original Transformer uses sine and cosine functions to create a positional encoding vector for each token in the input sequence. These vectors are then added to the learned embeddings via vector addition. The positional encodings depend solely on the absolute position of the tokens in the sequence and do not change based on the input sequence itself. For example, the token at position 0 will always have the same positional encoding, regardless of the sequence. Hence, this method is called absolute positional encoding.
+
+  - One limitation of this approach is that it only represents the absolute position of tokens, not their relative distances. For instance, the distance between the tokens in positions 3 and 5 of a sequence versus 103 and 105 is identical, but this information is not captured with absolute positional encoding. Intuitively, tokens that are closer together are likely to be more relevant than those that are further apart, and encoding this information about relative positioning could significantly improve model performance.
+
+  - Relative Positional Encoding: In April 2018, researchers at Google (including two authors of the original Transformer paper) published “Self-Attention with Relative Position Representations”, a paper that outlined a new paradigm for positional encoding [8]. The authors explored the use of relative positional encoding, which captures information about the relative distance between tokens as well as their absolute positions. For example, in the sentence “Write a poem about a man fishing on a river bank”, the words “poem” and “man” are three words apart, in the same way that “on” and “bank” are three words apart. This type of positional encoding has been used in prominent models such as Dai et al.’s Transformer-XL (2019) [9] and Google’s T5 (2020) [10].
+
+  - Although relative positional encoding improves a model’s ability to capture the relationship between tokens, it significantly increases the training time. As models grow larger, adding components that increase training time becomes less practical. Additionally, challenges like integrating an KV cache (which we will cover later in this article) have caused many researchers to move away from this technique. We will not cover the details of the original relative positional encoding technique, but if you are interested, I highly encourage you to read through the paper.
+
+  - Rotary Position Embeddings (RoPE): Rotary embeddings were introduced by Su et al. in their 2020 paper “RoFormer: Enhanced Transformer with Rotary Position Embedding”, and offer a unique approach to encoding positional information [11]. Unlike sinusoidal encoding, which adds positional information directly to the token embeddings, rotary embeddings instead apply a rotation to the query and key vectors for each token. The rotation angle for each token is based on its absolute position in the sequence. For example, in the input “write a poem about a man fishing on a river bank”, the query and key vectors for poem (at position 2) are rotated by 2θ, while the query and key vectors for man (at position 5) are rotated by 5θ, and so on. Note that token position is zero-indexed, meaning we start counting at 0 instead of 1 (therefore write is said to be at position 0 and so its query and key vectors are not rotated). This approach captures not only the absolute position of the token but also the relative positions, since man and poem are 3θ apart, which represents a distance of 3 tokens.
+
+  - Encoding positional information with angular displacement also offers a few nice properties that work well with existing transformer components. For example, the self-attention mechanism relies heavily on the dot-product operation, which already considers the angular distance between queries and keys in its formulae. Additionally, the angular distance between two tokens remains unchanged if more tokens are added before or after them. This allows for modifications to the input sequence without significantly altering the positional information, unlike the absolute positional encoding method.
+
+  - Implementing RoPET he outline above gives a simplified overview of RoPE to illustrate its core concepts, but the technical implementation includes two important details:
+
+    1. Pair-wise feature rotation: The features of each query/key vector are rotated in pairs within the embedding space.
+
+    2. Multi-frequency positional encoding: Each feature pair in a query/key vector is rotated by a slightly different angle.
+
+    Let’s look at how RoPE integrates into transformer-based architectures, the mathematics behind its implementation, and understand what the two details above mean and why they are needed for RoPE to function effectively.
+
+  — Integrating RoPE into Transformers: Transformers using RoPE process text with the following steps:
+
+    1. Tokenization and Embedding: As always, the process begins when a model receives an input sequence which is tokenized to produce a list of token IDs. These token IDs are then transformed into token embeddings, creating a matrix where each column corresponds to the embedding vector of a single token.
+
+    2. Normalization: In the original Transformer model, positional information is added directly to the raw token embeddings at this stage. However, in models using RoPE, the token embeddings are first normalized. This step stabilises training by preventing covariate shift, as discussed earlier (see the architecture diagram in Section 2.1).
+
+    3. Calculate Query, Key, and Value Matrices: The model then calculates the Query, Key, and Value matrices (Q, K, and V) needed for the attention mechanism. This is achieved by multiplying the normalized embeddings matrix by the corresponding weight matrices, W_Q, W_K, and W_V. Here, the columns of the resulting matrices represent the query, key, and value vectors for each token respectively. The Query and Key matrices are used to compute attention scores, which then weight the values in the Value matrix to produce context-aware outputs in the attention block.
+    4. Rotate the Query and Key Matrices: The Query and Key matrices are rotated to incorporate positional information. Since only the Query and Key matrices are involved in calculating attention scores, positional information is added solely to these matrices. As a result, the Value matrix is not rotated. After the attention scores are computed, the Value matrix simply provides the embeddings that will be updated based on the scores. This is why the positional encoding symbol is omitted from the Value matrix in the architecture diagram.
+
+  - Grouped Query Attention (GQA):  Mistral 7B uses Grouped Query Attention (GQA), which itself builds upon Multi-Query Attention (MQA).
+
+<READ MORE FROM ARTICLE>
 
 # Tokenizer
 
@@ -807,3 +900,108 @@ Here are some guidelines / scenarios:
 [31]: https://www.ibm.com/think/topics/encoder-decoder-model?utm_source=chatgpt.com "What is an encoder-decoder model? | IBM"
 [32]: https://en.wikipedia.org/wiki/T5_%28language_model%29?utm_source=chatgpt.com "T5 (language model)"
 [33]: https://www.next.gr/ai/sentiment-analysis/decoder-vs-encoder-in-transformer-models?utm_source=chatgpt.com "Decoder vs Encoder in Transformer Models | AI Tutorial | Next Electronics"
+
+
+## Feed forward Networks(FFN)
+
+Here’s a detailed explanation of the **feed-forward layer** (also called FFN—Feed-Forward Network) in Transformer architectures: what it is, how it works, why it’s there, and what trade-offs it brings.
+
+---
+
+### What is the Feed-Forward Layer (FFN) in Transformers
+
+The FFN is a sub-component inside each Transformer *block* (both encoder blocks and decoder blocks). It usually comes *after* the multi-head attention sublayer and adds extra transformation + nonlinearity. The sequence is:
+
+```
+… → Multi-Head Attention → Add & Normalize → Feed-Forward → Add & Normalize → …
+```
+
+So the FFN operates *within* each layer of the Transformer.
+
+---
+
+### Structure & Formula
+
+Typically, the FFN has this form:
+
+$$
+\mathrm{FFN}(x) = W_2\big(\phi(W_1 x + b_1)\big) + b_2
+$$
+
+Where:
+
+* $x$ is the input vector (for one position in the sequence; as a full batch it’s something like shape `[batch_size, seq_len, d_model]`).
+* $W_1$ is a weight matrix that increases dimensionality: from `d_model` to a larger dimension `d_ff` (sometimes called “intermediate size”, “filter size”, etc.).
+* $b_1$ is a bias term for that first linear transformation.
+* $\phi(\cdot)$ is a non-linear activation (original Transformer uses `ReLU`, many variants use e.g. `GeLU`). ([Wikipedia][34])
+* $W_2$ then projects back from `d_ff` down to `d_model`. $b_2$ is the corresponding bias.
+
+So the flow is: **expand → non-linear transform → contract**.
+
+---
+
+### Position-wise Application
+
+An important detail is that this FFN is *position-wise*, meaning:
+
+* It is applied *independently* at each position in the input sequence (and for each token) in parallel.
+* There are no interactions across sequence positions in the FFN part. The interactions (mixing information between positions) are handled by the attention mechanism. ([Divya's Blog][35])
+
+So if your input is of shape `[batch_size, seq_len, d_model]`, the FFN applies the same two linear layers + activation to each of the `seq_len` positions separately (though implemented in parallel via a batch matrix multiplication).
+
+---
+
+### Hyperparameters / Common Values
+
+* **`d_model`** is the input / output dimension for one position (the same dimension as embeddings / hidden states).
+* **`d_ff`** (intermediate / hidden size of the FFN) is larger, often 4× `d_model` in many implementations. E.g. if `d_model = 512`, then `d_ff = 2048`. ([Wikipedia][34])
+* The activation is often ReLU in the original, with dropout between the two linear layers. ([Towards Data Science][36])
+
+---
+
+### Why Do We Need FFN?
+
+Here’s what the FFN brings to the Transformer architecture:
+
+1. **Non-linearity / Feature transformation**
+   Attention lets the model mix information across positions, but that mixing is (apart from the softmax) linear in many parts. Nonlinear transformations (via ReLU / GeLU etc.) let the model build more complex, compositional representations of tokens.
+
+2. **Increasing model capacity**
+   By expanding to a wider dimension (`d_ff`) then compressing back, the FFN adds parameters and capacity which allow learning richer transformations. It helps the model better transform the attended (contextualized) representations before passing them to the next layer.
+
+3. **Expressivity**
+   Without the FFN, the model would be less expressive; attention + linear maps alone might not be enough to capture certain patterns. The FFN helps in capturing more “local” / “token-wise” transformations after context has been gathered.
+
+4. **Residual + normalization**
+   Because Transformers use residual connections around both attention and FFN sublayers (plus layer normalization), the FFN’s contribution can be large but stable; the network can preserve original signals plus side-transformations. This helps with training stability. ([Wikipedia][34])
+
+---
+
+### Example: Original Transformer FFN
+
+From “Attention Is All You Need” (Vaswani et al., 2017):
+
+* For the base model, `d_model = 512`.
+* `d_ff` (sometimes called `d_inner` or “filter size”) is **2048**.
+* The FFN structure is therefore: **512 → 2048 → 512**, with ReLU in between and dropout. ([Wikipedia][34])
+
+---
+
+### Some Recent Developments / Interpretations
+
+* There’s a paper “Transformer Feed-Forward Layers Are Key-Value Memories” that shows that the FFN layers can be seen as implementing something like a *key-value memory*: the first linear layer encodes “keys” (patterns in input), then the ReLU activation picks which “memories” to activate, then the second layer’s weights act like “values”. This gives some interpretability to what feed-forward layers are doing. ([arXiv][37])
+
+---
+
+### Trade-offs & Considerations
+
+* FFNs contribute a substantial fraction of parameters in large transformer models. So increasing `d_ff` increases model size (parameters), memory use, and compute cost.
+* Because they are applied position-wise, they don’t help with capturing how different positions relate (that’s left to attention). If FFN is too large relative to attention capacity, there may be diminishing returns.
+* Activation choice (ReLU vs others) and the dropout / regularization around FFN can affect performance, especially for very deep / large models.
+
+---
+
+[34]: https://en.wikipedia.org/wiki/Transformer_%28deep_learning_architecture%29?utm_source=chatgpt.com "Transformer (deep learning architecture)"
+[35]: https://dkamatblog.home.blog/2021/02/04/transformers-attention-is-all-you-need/?utm_source=chatgpt.com "Transformers – Attention is all you need – Divya's Blog"
+[36]: https://towardsdatascience.com/the-a-z-of-transformers-everything-you-need-to-know-c9f214c619ac/?utm_source=chatgpt.com "The A-Z of Transformers: Everything You Need to Know | Towards Data Science"
+[37]: https://arxiv.org/abs/2012.14913?utm_source=chatgpt.com "Transformer Feed-Forward Layers Are Key-Value Memories"
